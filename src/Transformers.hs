@@ -47,7 +47,7 @@ runEval1 ev = runIdentity ev
 --                         in case val1 of
 --                              FunVal env' n body -> eval0 (Map.insert n val2 env') body
 
-eval1 :: Env -> Exp -> Eval1 Value
+eval1 :: Monad m => Env -> Exp -> m Value
 eval1 env (Lit i) = return $ IntVal i
 eval1 env (Var n) = maybe (fail $ "undefined variable: " ++ n) return $ Map.lookup n env
 eval1 env (Plus e1 e2) = do IntVal i1 <- eval1 env e1
