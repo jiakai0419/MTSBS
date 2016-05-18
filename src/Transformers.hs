@@ -1,5 +1,9 @@
 module Transformers
-    (
+    ( Name
+    , Exp (..)
+    , Value (..)
+    , Env (..)
+    , eval0
     ) where
 
 import Control.Monad.Identity
