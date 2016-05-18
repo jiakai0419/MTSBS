@@ -4,6 +4,7 @@ module Transformers
     , Value (..)
     , Env (..)
     , eval1
+    , runEval1
     ) where
 
 import Control.Monad.Identity
@@ -57,5 +58,4 @@ eval1 env (App e1 e2) = do val1 <- eval1 env e1
                            val2 <- eval1 env e2
                            case val1 of
                              FunVal env' n body -> eval1 (Map.insert n val2 env') body
-
 
