@@ -3,8 +3,8 @@ module Transformers
     , Exp (..)
     , Value (..)
     , Env (..)
-    , eval3
-    , runEval3
+    , eval4
+    , runEval4
     ) where
 
 import Control.Monad.Identity
@@ -32,25 +32,25 @@ type Env = Map.Map Name Value
 
 type Eval4 a = ReaderT Env (ErrorT String (StateT Integer Identity)) a
 
-runEval3 :: Env -> Eval3 a -> Either String a
-runEval3 env ev = runIdentity $ runErrorT $ runReaderT ev env
+runEval4 :: Env -> Integer -> Eval4 -> (Either String a, Integer)
+runEval4 env st ev = runIdentity (runStateT (runErrorT (runReaderT ev env)) st)
 
-eval3 :: Exp -> Eval3 Value
-eval3 (Lit i) = return $ IntVal i
-eval3 (Var n) = do env <- ask
-                   case Map.lookup n env of
-                     Nothing -> throwError $ "undefined variable: " ++ n
-                     Just val -> return val
-eval3 (Plus e1 e2) = do val1 <- eval3 e1
-                        val2 <- eval3 e2
-                        case (val1, val2) of
-                          (IntVal i1, IntVal i2) -> return $ IntVal (i1 + i2)
-                          _ -> throwError "type error in addition"
-eval3 (Abs n e) = do env <- ask
-                     return $ FunVal env n e
-eval3 (App e1 e2) = do val1 <- eval3 e1
-                       val2 <- eval3 e2
-                       case val1 of
-                         FunVal env' n body -> local (const (Map.insert n val2 env')) (eval3 body)
-                         _ -> throwError "type error in application"
+-- eval4 :: Exp -> Eval4 Value
+-- eval4 (Lit i) = return $ IntVal i
+-- eval4 (Var n) = do env <- ask
+--                    case Map.lookup n env of
+--                      Nothing -> throwError $ "undefined variable: " ++ n
+--                      Just val -> return val
+-- eval4 (Plus e1 e2) = do val1 <- eval4 e1
+--                         val2 <- eval4 e2
+--                         case (val1, val2) of
+--                           (IntVal i1, IntVal i2) -> return $ IntVal (i1 + i2)
+--                           _ -> throwError "type error in addition"
+-- eval4 (Abs n e) = do env <- ask
+--                      return $ FunVal env n e
+-- eval4 (App e1 e2) = do val1 <- eval4 e1
+--                        val2 <- eval4 e2
+--                        case val1 of
+--                          FunVal env' n body -> local (const (Map.insert n val2 env')) (eval4 body)
+--                          _ -> throwError "type error in application"
 
