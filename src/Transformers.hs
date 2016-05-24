@@ -30,7 +30,7 @@ data Value = IntVal Integer
 
 type Env = Map.Map Name Value
 
-type Eval3 a = ReaderT Env (ErrorT String Identity) a
+type Eval4 a = ReaderT Env (ErrorT String (StateT Integer Identity)) a
 
 runEval3 :: Env -> Eval3 a -> Either String a
 runEval3 env ev = runIdentity $ runErrorT $ runReaderT ev env
