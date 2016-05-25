@@ -8,4 +8,6 @@ exampleExp1 = Plus (Lit 1) (Abs "x" (Var "x"))
 exampleExp2 = Var "x"
 
 main :: IO ()
-main = putStrLn . show . runEval5 Map.empty 0 . eval5 $ exampleExp
+main = do
+  result <- runEval6 Map.empty 0 . eval6 $ exampleExp
+  print result
