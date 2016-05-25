@@ -3,8 +3,8 @@ module Transformers
     , Exp (..)
     , Value (..)
     , Env (..)
-    , eval4
-    , runEval4
+    , eval5
+    , runEval5
     ) where
 
 import Control.Monad.Identity
@@ -30,36 +30,37 @@ data Value = IntVal Integer
 
 type Env = Map.Map Name Value
 
-type Eval4 a = ReaderT Env (ErrorT String (StateT Integer Identity)) a
+type Eval5 a = ReaderT Env (ErrorT String (WriterT [String] (StateT Integer Identity))) a
 
-runEval4 :: Env -> Integer -> Eval4 a -> (Either String a, Integer)
-runEval4 env st ev = runIdentity (runStateT (runErrorT (runReaderT ev env)) st)
+runEval5 :: Env -> Integer -> Eval5 a -> ((Either String a, [String]), Integer)
+runEval5 env st ev = runIdentity (runStateT (runWriterT (runErrorT (runReaderT ev env))) st)
 
 tick :: (Num s, MonadState s m) => m ()
 tick = do st <- get
           put (st + 1)
 
-eval4 :: Exp -> Eval4 Value
-eval4 (Lit i) = do tick
+eval5 :: Exp -> Eval5 Value
+eval5 (Lit i) = do tick
                    return $ IntVal i
-eval4 (Var n) = do tick
+eval5 (Var n) = do tick
+                   tell [n]
                    env <- ask
                    case Map.lookup n env of
                      Nothing -> throwError $ "undefined variable: " ++ n
                      Just val -> return val
-eval4 (Plus e1 e2) = do tick
-                        val1 <- eval4 e1
-                        val2 <- eval4 e2
+eval5 (Plus e1 e2) = do tick
+                        val1 <- eval5 e1
+                        val2 <- eval5 e2
                         case (val1, val2) of
                           (IntVal i1, IntVal i2) -> return $ IntVal (i1 + i2)
                           _ -> throwError "type error in addition"
-eval4 (Abs n e) = do tick
+eval5 (Abs n e) = do tick
                      env <- ask
                      return $ FunVal env n e
-eval4 (App e1 e2) = do tick
-                       val1 <- eval4 e1
-                       val2 <- eval4 e2
+eval5 (App e1 e2) = do tick
+                       val1 <- eval5 e1
+                       val2 <- eval5 e2
                        case val1 of
-                         FunVal env' n body -> local (const (Map.insert n val2 env')) (eval4 body)
+                         FunVal env' n body -> local (const (Map.insert n val2 env')) (eval5 body)
                          _ -> throwError "type error in application"
 
